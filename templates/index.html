@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer AI</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --secondary-text: #94a3b8;
+            --accent: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--secondary-text);
+            margin-bottom: 2rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #475569;
+        }
+
+        .file-name {
+            display: block;
+            margin-top: 1rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--secondary-text);
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 2rem;
+            background-color: #0f172a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-direction: column;
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent) var(--score-angle, 0%), #1e293b 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-value {
+            background-color: #0f172a;
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .section-title {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tag {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #93c5fd;
+            padding: 0.4rem 0.8rem;
+            border-radius: 99px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .tag.strength {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        
+        .tag.weakness {
+            background-color: rgba(244, 63, 94, 0.1);
+            color: #fda4af;
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Resume Analyzer AI</h1>
+        <p class="subtitle">Upload your CV to instantly receive an AI-driven analysis of your skills, strengths, weaknesses, and an overall score.</p>
+        
+        <form id="uploadForm">
+            <div class="upload-area" id="dropZone">
+                <div class="upload-icon">📄</div>
+                <div style="font-size: 1.1rem; color: #cbd5e1;">Drag & Drop your PDF here</div>
+                <div style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">or click to browse</div>
+                <input type="file" id="resumeFile" accept=".pdf" required>
+                <span class="file-name" id="fileNameDisplay"></span>
+            </div>
+            
+            <button type="submit" class="btn" id="analyzeBtn">Analyze Resume</button>
+        </form>
+        
+        <div id="loading">
+            <div class="loader"></div>
+            <p>Scanning document and generating insights...</p>
+        </div>
+        
+        <div class="results" id="resultsArea">
+            <div class="score-container">
+                <div class="score-circle" id="scoreCircle">
+                    <div class="score-value" id="scoreValue">0</div>
+                </div>
+                <div style="margin-top: 10px; color: #94a3b8; font-weight: 500;">Overall Match Score</div>
+            </div>
+            
+            <h3 class="section-title">Core Skills</h3>
+            <ul class="tag-list" id="skillsList"></ul>
+            
+            <h3 class="section-title">Key Strengths</h3>
+            <ul class="tag-list" id="strengthsList"></ul>
+            
+            <h3 class="section-title">Areas for Improvement</h3>
+            <ul class="tag-list" id="weaknessesList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('resumeFile');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const uploadForm = document.getElementById('uploadForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultsArea = document.getElementById('resultsArea');
+        const dropZone = document.getElementById('dropZone');
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileNameDisplay.textContent = this.files[0].name;
+            }
+        });
+        
+        // Drag and drop styles
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                fileInput.files = files;
+                fileNameDisplay.textContent = files[0].name;
+            } else {
+                alert('Please upload a valid PDF file.');
+            }
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // UI States
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            resultsArea.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during analysis. Make sure the backend is running and the GROQ_API_KEY is properly set.');
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        function displayResults(data) {
+            resultsArea.style.display = 'block';
+            
+            // Render Score
+            const score = parseInt(data.Score) || 0;
+            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('scoreCircle').style.setProperty('--score-angle', `${(score / 100) * 360}deg`);
+            
+            // Helper to populate lists
+            const populateList = (id, items, extraClass) => {
+                const list = document.getElementById(id);
+                list.innerHTML = '';
+                
+                if (!items || items.length === 0 || items[0] === "N/A") {
+                    list.innerHTML = `<li class="tag">No specific data found</li>`;
+                    return;
+                }
+                
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = `tag ${extraClass}`;
+                    li.textContent = item;
+                    list.appendChild(li);
+                });
+            };
+            
+            populateList('skillsList', data.Skills, '');
+            populateList('strengthsList', data.Strengths, 'strength');
+            populateList('weaknessesList', data.Weaknesses, 'weakness');
+            
+            // Scroll to results
+            resultsArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
